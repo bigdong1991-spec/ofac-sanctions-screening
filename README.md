@@ -1,87 +1,92 @@
-# 🛡️ OFAC Sanctions Screening Tool
+# 🛡️ OFAC 制裁名单筛查工具
 
-A lightweight, open-source sanctions screening tool that checks entities against the **OFAC SDN (Specially Designated Nationals) List** with fuzzy matching — in under 5 seconds.
+轻量级、开源的制裁名单筛查工具，基于 **OFAC SDN（特别指定国民）名单**，支持模糊匹配，5秒内出报告。
 
-## Why This Exists
+## 为什么做这个？
 
-Commercial sanctions screening tools cost **$10,000–$100,000+/year**. Small and mid-size trading companies often can't afford them, leaving compliance gaps that could result in **millions in fines**.
+商业制裁筛查工具一年 **$10,000–$100,000+**，中小型外贸公司根本用不起，只能靠手动 Ctrl+F 查 Excel。
 
-This tool provides **free, instant sanctions screening** with professional-grade HTML reports.
+手动查的问题：
+- 18,700+ 条记录，逐条比对耗时耗力
+- 拼写变体、别名容易遗漏
+- 没有存档记录，审计时说不清楚
 
-## Features
+这个工具：**免费、5秒、自动出报告**。
 
-- 🔍 **Fuzzy Matching** — Catches spelling variants and aliases (not just exact matches)
-- 📊 **18,700+ SDN Records** — Full OFAC Specially Designated Nationals list
-- 📄 **Professional HTML Reports** — Print-ready, with risk levels and audit trail
-- ⚡ **< 5 seconds** — From query to report
-- 🚀 **Zero Dependencies** — Pure Python, no installation needed
-- 🌐 **Bilingual** — Chinese/English report output
+## 功能
 
-## Risk Levels
+- 🔍 **模糊匹配** — 不只是精确匹配，拼写变体和别名也能抓到
+- 📊 **18,700+ 条 SDN 记录** — 完整的 OFAC 特别指定国民名单
+- 📄 **专业 HTML 报告** — 可打印、可存档、带风险等级
+- ⚡ **< 5 秒** — 从输入到出报告
+- 🚀 **零依赖** — 纯 Python，不用装任何库
+- 🎯 **三级风险标识** — 一目了然
 
-| Level | Meaning | Action |
-|-------|---------|--------|
-| 🔴 **CRITICAL** | ≥95% match | **Mandatory manual review** |
-| 🟠 **HIGH** | 85-94% match | Recommended review |
-| 🟡 **MEDIUM** | 75-84% match | Further verification suggested |
-| 🟢 **LOW** | No match | Passed |
+## 风险等级
 
-## Quick Start
+| 等级 | 含义 | 处理建议 |
+|------|------|----------|
+| 🔴 **CRITICAL** | 相似度 ≥95% | **必须人工复核，暂停交易** |
+| 🟠 **HIGH** | 85-94% | 建议人工复核 |
+| 🟡 **MEDIUM** | 75-84% | 建议进一步核实 |
+| 🟢 **LOW** | 无匹配 | 通过 |
+
+## 快速开始
 
 ```bash
-# Clone
+# 下载代码
 git clone https://github.com/bigdong1991-spec/ofac-sanctions-screening.git
 cd ofac-sanctions-screening
 
-# Download latest OFAC SDN list
+# 下载最新 OFAC SDN 名单
 curl -sL "https://www.treasury.gov/ofac/downloads/sdn.csv" -o sdn.csv
 
-# Screen an entity
+# 筛查一个实体
 python3 screen.py "Banco Nacional de Cuba"
 ```
 
-Output: an HTML report file in the current directory.
+运行后会在当前目录生成一个 HTML 报告文件，用浏览器打开即可。
 
-## Demo Results
+## 效果展示
 
-### 🔴 CRITICAL — Direct Hit (100%)
-![Critical Hit](screenshots/critical.jpg)
+### 🔴 CRITICAL — 精确命中（100%）
+![命中报告](screenshots/critical.jpg)
 
-### 🟡 MEDIUM — Fuzzy Match (79%)
-![Medium Match](screenshots/medium.jpg)
+### 🟡 MEDIUM — 模糊匹配（79%）
+![模糊匹配](screenshots/medium.jpg)
 
-### 🟢 LOW — Clean (0%)
-![Clean](screenshots/clean.jpg)
+### 🟢 LOW — 安全通过（0%）
+![安全通过](screenshots/clean.jpg)
 
-## How It Works
+## 工作原理
 
-1. **Load** — Parses the full OFAC SDN CSV (18,700+ entities)
-2. **Match** — Runs fuzzy string matching (SequenceMatcher) against all entries + aliases
-3. **Score** — Calculates similarity percentage for each potential match
-4. **Report** — Generates a styled HTML report with risk classification
+1. **加载** — 解析完整的 OFAC SDN CSV 文件（18,700+ 条实体）
+2. **匹配** — 对所有记录 + 别名进行模糊字符串匹配
+3. **评分** — 计算每条潜在匹配的相似度百分比
+4. **报告** — 生成带风险分级的专业 HTML 报告
 
-## Data Source
+## 数据来源
 
-- **OFAC SDN List**: [U.S. Treasury — Office of Foreign Assets Control](https://www.treasury.gov/ofac/downloads/sdn.csv)
-- Updated regularly by the U.S. Department of the Treasury
-- To update: re-download `sdn.csv` from the link above
+- **OFAC SDN 名单**：[美国财政部 — 海外资产控制办公室](https://www.treasury.gov/ofac/downloads/sdn.csv)
+- 由美国财政部定期更新
+- 更新方式：重新下载 `sdn.csv` 即可
 
-## Roadmap
+## 路线图
 
-- [ ] Batch screening (CSV/Excel upload)
-- [ ] EU & UN sanctions lists
-- [ ] Auto-update SDN data (weekly cron)
-- [ ] REST API endpoint
-- [ ] Audit log with operator tracking
+- [ ] 批量筛查（支持 CSV/Excel 上传）
+- [ ] 增加 EU、UN 制裁名单
+- [ ] SDN 数据自动更新（每周定时）
+- [ ] REST API 接口
+- [ ] 审计日志（操作人 + 时间戳追踪）
 
-## ⚠️ Disclaimer
+## ⚠️ 免责声明
 
-This tool is for **preliminary screening only**. Results do not constitute final compliance conclusions. Any potential matches must be reviewed by a qualified compliance officer with full due diligence. This tool does not replace professional compliance review.
+本工具仅供**初步筛查参考**。匹配结果不代表最终合规结论。任何疑似命中均需由合规专员进行人工复核，并结合完整的尽职调查结果做出最终判断。本工具不替代专业合规审查。
 
-## License
+## 许可证
 
 MIT
 
 ---
 
-Built by a trade compliance professional who got tired of manual screening.
+一个外贸合规人做的，因为受够了手动查名单。
