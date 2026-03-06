@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OFAC制裁名单筛查 - 免费在线工具</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, 'Segoe UI', 'PingFang SC', sans-serif; background:#0a0a1a; color:#e0e0e0; min-height:100vh; }
+.container { max-width:800px; margin:0 auto; padding:20px; }
+
+/* Header */
+.hero { text-align:center; padding:50px 20px 30px; }
+.hero h1 { font-size:28px; color:#fff; margin-bottom:10px; }
+.hero h1 span { color:#4ecdc4; }
+.hero .subtitle { color:#8892b0; font-size:14px; line-height:1.6; }
+.hero .stats { display:flex; justify-content:center; gap:30px; margin-top:20px; }
+.hero .stat { text-align:center; }
+.hero .stat .num { font-size:24px; font-weight:700; color:#4ecdc4; }
+.hero .stat .label { font-size:12px; color:#8892b0; }
+
+/* Search */
+.search-box { background:#1a1a2e; border-radius:16px; padding:30px; margin:20px 0; }
+.search-box h2 { font-size:16px; margin-bottom:15px; color:#ccc; }
+.input-row { display:flex; gap:10px; }
+.input-row input { flex:1; padding:14px 18px; border-radius:10px; border:2px solid #2a2a4a; background:#0d0d22; color:#fff; font-size:16px; outline:none; transition:border 0.3s; }
+.input-row input:focus { border-color:#4ecdc4; }
+.input-row input::placeholder { color:#555; }
+.btn { padding:14px 28px; border-radius:10px; border:none; background:#4ecdc4; color:#0a0a1a; font-size:16px; font-weight:700; cursor:pointer; transition:all 0.3s; white-space:nowrap; }
+.btn:hover { background:#45b7af; transform:translateY(-1px); }
+.btn:disabled { background:#333; color:#666; cursor:not-allowed; transform:none; }
+
+/* Loading */
+.loading { text-align:center; padding:40px; color:#8892b0; }
+.loading .spinner { display:inline-block; width:30px; height:30px; border:3px solid #333; border-top-color:#4ecdc4; border-radius:50%; animation:spin 0.8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* Results */
+.result-banner { padding:20px; border-radius:12px; margin:20px 0; display:none; }
+.result-banner.alert { background:#2d1215; border-left:4px solid #e74c3c; }
+.result-banner.review { background:#2d2412; border-left:4px solid #f39c12; }
+.result-banner.clear { background:#122d18; border-left:4px solid #27ae60; }
+.result-banner .conclusion { font-size:20px; font-weight:700; }
+.result-banner.alert .conclusion { color:#e74c3c; }
+.result-banner.review .conclusion { color:#f39c12; }
+.result-banner.clear .conclusion { color:#27ae60; }
+.result-banner .desc { font-size:13px; color:#999; margin-top:5px; }
+.result-banner .time { font-size:11px; color:#666; margin-top:8px; }
+
+/* Table */
+.results-table { background:#1a1a2e; border-radius:12px; overflow:hidden; margin:20px 0; display:none; }
+.results-table h3 { padding:15px 20px; font-size:14px; color:#ccc; border-bottom:1px solid #2a2a4a; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { background:#12122a; padding:12px 15px; text-align:left; color:#8892b0; font-weight:600; }
+td { padding:12px 15px; border-bottom:1px solid #1f1f3a; }
+tr:hover { background:#12122a; }
+.score-bar { display:flex; align-items:center; gap:8px; }
+.score-bar .bar { width:50px; height:6px; background:#2a2a4a; border-radius:3px; overflow:hidden; }
+.score-bar .bar .fill { height:100%; border-radius:3px; }
+.score-bar .pct { font-weight:600; font-size:12px; }
+
+/* Footer */
+.disclaimer { background:#1a1a2e; border-radius:12px; padding:20px; margin:30px 0; font-size:12px; color:#666; line-height:1.8; }
+.disclaimer strong { color:#f39c12; }
+.footer { text-align:center; padding:20px; font-size:11px; color:#555; }
+.footer a { color:#4ecdc4; text-decoration:none; }
+
+/* Batch */
+.batch-toggle { text-align:center; margin:10px 0; }
+.batch-toggle a { color:#4ecdc4; font-size:13px; cursor:pointer; text-decoration:none; }
+.batch-input { display:none; margin-top:15px; }
+.batch-input textarea { width:100%; height:120px; padding:12px; border-radius:10px; border:2px solid #2a2a4a; background:#0d0d22; color:#fff; font-size:14px; outline:none; resize:vertical; font-family:monospace; }
+.batch-input textarea::placeholder { color:#555; }
+
+/* No match warning */
+.no-match-warn { background:#2d2412; border-radius:8px; padding:12px 16px; margin-top:10px; font-size:12px; color:#f39c12; }
+
+/* Responsive */
+@media(max-width:600px) {
+  .input-row { flex-direction:column; }
+  .hero .stats { gap:15px; }
+  .hero h1 { font-size:22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="hero">
+    <h1>🛡️ <span>OFAC</span> 制裁名单筛查</h1>
+    <div class="subtitle">输入公司或个人名称，5秒内完成制裁名单比对<br>免费 · 开源 · 无需注册</div>
+    <div class="stats">
+      <div class="stat"><div class="num" id="recordCount">-</div><div class="label">制裁记录</div></div>
+      <div class="stat"><div class="num">&lt;5s</div><div class="label">筛查速度</div></div>
+      <div class="stat"><div class="num">$0</div><div class="label">费用</div></div>
+    </div>
+  </div>
+
+  <div class="search-box">
+    <h2>🔍 开始筛查</h2>
+    <div class="input-row">
+      <input type="text" id="queryInput" placeholder="输入公司或个人名称，如：Banco Nacional de Cuba" autofocus>
+      <button class="btn" id="searchBtn" onclick="doSearch()" disabled>筛查</button>
+    </div>
+    <div class="batch-toggle"><a onclick="toggleBatch()">📋 批量筛查（多个名称）</a></div>
+    <div class="batch-input" id="batchBox">
+      <textarea id="batchInput" placeholder="每行一个名称，如：&#10;Banco Nacional de Cuba&#10;Apple Inc&#10;Shanghai Huawei Trading"></textarea>
+      <button class="btn" style="margin-top:10px;width:100%" onclick="doBatchSearch()">批量筛查</button>
+    </div>
+  </div>
+
+  <div class="loading" id="loadingData">
+    <div class="spinner"></div>
+    <p style="margin-top:10px">正在加载制裁名单数据...</p>
+  </div>
+
+  <div class="loading" id="loadingSearch" style="display:none">
+    <div class="spinner"></div>
+    <p style="margin-top:10px">正在筛查...</p>
+  </div>
+
+  <div class="result-banner" id="resultBanner">
+    <div class="conclusion" id="resultConclusion"></div>
+    <div class="desc" id="resultDesc"></div>
+    <div class="time" id="resultTime"></div>
+  </div>
+
+  <div class="results-table" id="resultsTable">
+    <h3 id="resultsTitle"></h3>
+    <table>
+      <thead><tr><th>#</th><th>名称</th><th>国家/地区</th><th>相似度</th></tr></thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+
+  <div class="disclaimer">
+    <strong>⚠️ 免责声明</strong>：本工具基于OFAC SDN公开名单的自动化模糊匹配，仅供初步筛查参考。
+    匹配结果不代表最终合规结论，无匹配结果也不构成合规放行依据。
+    任何疑似命中均需由合规专员进行人工复核。本工具不替代专业合规审查。<br><br>
+    数据来源：U.S. Department of the Treasury — Office of Foreign Assets Control (OFAC)
+  </div>
+
+  <div class="footer">
+    <a href="https://github.com/bigdong1991-spec/ofac-sanctions-screening" target="_blank">GitHub</a> · 
+    一个外贸合规人做的，因为受够了手动查名单。
+  </div>
+</div>
+
+<script>
+let sdnData = [];
+
+// 加载数据
+async function loadData() {
+  try {
+    const resp = await fetch('sdn_data.json');
+    sdnData = await resp.json();
+    document.getElementById('recordCount').textContent = sdnData.length.toLocaleString();
+    document.getElementById('loadingData').style.display = 'none';
+    document.getElementById('searchBtn').disabled = false;
+  } catch(e) {
+    document.getElementById('loadingData').innerHTML = '<p style="color:#e74c3c">❌ 数据加载失败，请刷新重试</p>';
+  }
+}
+
+// 模糊匹配（纯JS实现）
+function similarity(a, b) {
+  a = a.toUpperCase().trim();
+  b = b.toUpperCase().trim();
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  if (a.includes(b) || b.includes(a)) return 0.95;
+  
+  // token sort: 按词排序后比较
+  const sortTokens = s => s.split(/\s+/).sort().join(' ');
+  const as = sortTokens(a), bs = sortTokens(b);
+  
+  // Levenshtein-based ratio
+  const ratio = (s1, s2) => {
+    const len1 = s1.length, len2 = s2.length;
+    if (len1 === 0 || len2 === 0) return 0;
+    const matrix = Array(len1 + 1).fill(null).map(() => Array(len2 + 1).fill(0));
+    for (let i = 0; i <= len1; i++) matrix[i][0] = i;
+    for (let j = 0; j <= len2; j++) matrix[0][j] = j;
+    for (let i = 1; i <= len1; i++) {
+      for (let j = 1; j <= len2; j++) {
+        const cost = s1[i-1] === s2[j-1] ? 0 : 1;
+        matrix[i][j] = Math.min(matrix[i-1][j]+1, matrix[i][j-1]+1, matrix[i-1][j-1]+cost);
+      }
+    }
+    const dist = matrix[len1][len2];
+    return 1 - dist / Math.max(len1, len2);
+  };
+  
+  const r1 = ratio(a, b);
+  const r2 = ratio(as, bs);
+  
+  // partial: 短串在长串中找最佳窗口
+  let partial = 0;
+  const short_ = a.length <= b.length ? a : b;
+  const long_ = a.length <= b.length ? b : a;
+  if (short_.length >= 4) {
+    const winLen = short_.length;
+    for (let i = 0; i <= long_.length - winLen; i += Math.max(1, Math.floor(winLen/4))) {
+      const window = long_.substring(i, i + winLen);
+      const wr = ratio(short_, window);
+      if (wr > partial) partial = wr;
+    }
+    // 按长度差打折
+    const lenRatio = Math.min(a.length, b.length) / Math.max(a.length, b.length);
+    partial = partial * (0.5 + 0.5 * lenRatio);
+  }
+  
+  return Math.max(r1, r2, partial);
+}
+
+// 提取AKA
+function extractAkas(remarks) {
+  if (!remarks) return [];
+  const akas = [];
+  const patterns = [/a\.k\.a\.?\s+'([^']+)'/gi, /a\.k\.a\.?\s+"([^"]+)"/gi, /f\.k\.a\.?\s+'([^']+)'/gi];
+  for (const p of patterns) {
+    let m;
+    while ((m = p.exec(remarks)) !== null) {
+      if (m[1].length >= 4) akas.push(m[1]);
+    }
+  }
+  return akas;
+}
+
+// 筛查
+function screen(query, threshold = 0.75) {
+  const results = [];
+  const seen = new Set();
+  
+  for (const [name, country, type, remarks] of sdnData) {
+    let bestScore = similarity(query, name);
+    let matchField = 'name';
+    
+    for (const aka of extractAkas(remarks)) {
+      const akaScore = similarity(query, aka);
+      if (akaScore > bestScore) {
+        bestScore = akaScore;
+        matchField = 'aka: ' + aka;
+      }
+    }
+    
+    if (bestScore >= threshold) {
+      const key = name + country;
+      if (!seen.has(key)) {
+        seen.add(key);
+        results.push({ name, country, type, score: bestScore, matchField });
+      }
+    }
+  }
+  
+  results.sort((a, b) => b.score - a.score);
+  return results.slice(0, 20);
+}
+
+function conclude(results) {
+  if (!results.length) return ['CLEAR', '✅', '未发现匹配（不代表绝对安全，仍需结合其他尽职调查）', 'clear'];
+  const top = results[0].score;
+  if (top >= 0.90) return ['ALERT', '🚨', '疑似制裁实体命中，必须暂停交易并人工复核', 'alert'];
+  return ['REVIEW', '⚠️', '存在需要人工审核的匹配，建议进一步核实', 'review'];
+}
+
+function showResults(query, results, timeMs) {
+  const [level, icon, desc, cls] = conclude(results);
+  const banner = document.getElementById('resultBanner');
+  banner.className = 'result-banner ' + cls;
+  banner.style.display = 'block';
+  document.getElementById('resultConclusion').textContent = icon + ' 结论：' + level;
+  document.getElementById('resultDesc').textContent = desc;
+  document.getElementById('resultTime').textContent = '筛查对象：' + query + ' | 耗时：' + timeMs + 'ms | 数据量：' + sdnData.length + '条';
+  
+  const table = document.getElementById('resultsTable');
+  const body = document.getElementById('resultsBody');
+  document.getElementById('resultsTitle').textContent = '匹配结果（共 ' + results.length + ' 条）';
+  
+  if (results.length === 0) {
+    body.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:#27ae60">✅ 未发现匹配记录</td></tr>';
+    table.style.display = 'block';
+    table.insertAdjacentHTML('beforeend', '<div class="no-match-warn">⚠️ 无匹配不代表绝对安全。本工具仅覆盖OFAC SDN名单，未包含EU、UN等其他制裁名单。</div>');
+    return;
+  }
+  
+  body.innerHTML = results.map((r, i) => {
+    const pct = Math.round(r.score * 100);
+    const color = pct >= 90 ? '#e74c3c' : pct >= 75 ? '#f39c12' : '#f1c40f';
+    const mf = r.matchField !== 'name' ? ' <span style="color:#888;font-size:11px">(' + r.matchField + ')</span>' : '';
+    return '<tr><td>' + (i+1) + '</td><td><strong>' + r.name + '</strong>' + mf + '</td><td>' + r.country + '</td><td><div class="score-bar"><div class="bar"><div class="fill" style="width:' + pct + '%;background:' + color + '"></div></div><span class="pct" style="color:' + color + '">' + pct + '%</span></div></td></tr>';
+  }).join('');
+  table.style.display = 'block';
+}
+
+function doSearch() {
+  const query = document.getElementById('queryInput').value.trim();
+  if (!query) return;
+  
+  document.getElementById('loadingSearch').style.display = 'block';
+  document.getElementById('resultBanner').style.display = 'none';
+  document.getElementById('resultsTable').style.display = 'none';
+  
+  setTimeout(() => {
+    const t0 = performance.now();
+    const results = screen(query);
+    const timeMs = Math.round(performance.now() - t0);
+    
+    document.getElementById('loadingSearch').style.display = 'none';
+    showResults(query, results, timeMs);
+  }, 50);
+}
+
+function doBatchSearch() {
+  const text = document.getElementById('batchInput').value.trim();
+  if (!text) return;
+  const queries = text.split('\n').map(s => s.trim()).filter(Boolean);
+  
+  let html = '<div style="margin:20px 0">';
+  const t0 = performance.now();
+  for (const q of queries) {
+    const results = screen(q);
+    const [level, icon, desc, cls] = conclude(results);
+    const topMatch = results.length ? results[0].name + ' (' + Math.round(results[0].score*100) + '%)' : '-';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 15px;border-bottom:1px solid #1f1f3a"><span>' + q + '</span><span style="color:' + (cls==='alert'?'#e74c3c':cls==='review'?'#f39c12':'#27ae60') + ';font-weight:600">' + icon + ' ' + level + (results.length ? ' → ' + topMatch : '') + '</span></div>';
+  }
+  const timeMs = Math.round(performance.now() - t0);
+  html += '</div>';
+  
+  const banner = document.getElementById('resultBanner');
+  banner.className = 'result-banner review';
+  banner.style.display = 'block';
+  document.getElementById('resultConclusion').textContent = '📋 批量筛查完成';
+  document.getElementById('resultDesc').textContent = '共筛查 ' + queries.length + ' 个实体';
+  document.getElementById('resultTime').textContent = '总耗时：' + timeMs + 'ms';
+  
+  const table = document.getElementById('resultsTable');
+  table.innerHTML = '<h3>批量筛查结果</h3>' + html;
+  table.style.display = 'block';
+}
+
+function toggleBatch() {
+  const box = document.getElementById('batchBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+// Enter键搜索
+document.getElementById('queryInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+
+// 启动
+loadData();
+</script>
+</body>
+</html>
