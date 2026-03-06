@@ -93,6 +93,7 @@ tr:hover { background:#12122a; }
       <div class="stat"><div class="num" id="recordCount">-</div><div class="label">制裁记录</div></div>
       <div class="stat"><div class="num">&lt;5s</div><div class="label">筛查速度</div></div>
       <div class="stat"><div class="num">$0</div><div class="label">费用</div></div>
+      <div class="stat"><div class="num" id="dataDate">-</div><div class="label">数据日期</div></div>
     </div>
   </div>
 
@@ -155,6 +156,7 @@ async function loadData() {
     const resp = await fetch('sdn_data.json');
     sdnData = await resp.json();
     document.getElementById('recordCount').textContent = sdnData.length.toLocaleString();
+    document.getElementById('dataDate').textContent = '2026-03-06';
     document.getElementById('loadingData').style.display = 'none';
     document.getElementById('searchBtn').disabled = false;
   } catch(e) {
